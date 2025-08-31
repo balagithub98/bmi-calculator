@@ -67,15 +67,7 @@ const BMICalculator: React.FC = () => {
     }
   };
 
-  const handleBackFromHistory = () => {
-    try {
-      setError(null);
-      setShowHistory(false);
-    } catch (err) {
-      setError('Navigation error. Please try again.');
-      console.error('Error navigating:', err);
-    }
-  };
+
 
   return (
     <div className="container mx-auto px-4 py-8">

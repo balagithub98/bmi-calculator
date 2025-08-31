@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PersonalDetails, BMIData } from '../types';
 import { RotateCcw, Heart, AlertTriangle, CheckCircle, XCircle, History } from 'lucide-react';
 import { UserService } from '../services/userService';
@@ -16,9 +16,9 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ personalDetails, bmiDat
 
   useEffect(() => {
     saveUserRecord();
-  }, []);
+  }, [saveUserRecord]);
 
-  const saveUserRecord = async () => {
+  const saveUserRecord = useCallback(async () => {
     try {
       setSaving(true);
       setSaveStatus('idle');
@@ -34,7 +34,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ personalDetails, bmiDat
     } finally {
       setSaving(false);
     }
-  };
+  }, [personalDetails, bmiData]);
   const getBMICategoryInfo = (category: string) => {
     switch (category) {
       case 'Underweight':

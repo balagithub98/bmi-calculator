@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { UserService } from '../services/userService';
 import { UserRecord } from '../lib/supabase';
 import { Calendar, TrendingUp, User, Mail } from 'lucide-react';
@@ -15,9 +15,9 @@ const UserHistory: React.FC<UserHistoryProps> = ({ userEmail, onSelectRecord }) 
 
   useEffect(() => {
     loadUserRecords();
-  }, [userEmail]);
+  }, [userEmail, loadUserRecords]);
 
-  const loadUserRecords = async () => {
+  const loadUserRecords = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -29,7 +29,7 @@ const UserHistory: React.FC<UserHistoryProps> = ({ userEmail, onSelectRecord }) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [userEmail]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
