@@ -122,7 +122,6 @@ const BMICalculator: React.FC = () => {
               personalDetails={personalDetails}
               bmiData={bmiData}
               onReset={handleReset}
-              onBack={() => handleBackToStep(2)}
             />
           )}
         </div>

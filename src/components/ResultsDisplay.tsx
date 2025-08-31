@@ -6,7 +6,6 @@ interface ResultsDisplayProps {
   personalDetails: PersonalDetails;
   bmiData: BMIData;
   onReset: () => void;
-  onBack: () => void;
 }
 
 const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ personalDetails, bmiData, onReset }) => {
@@ -193,20 +192,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ personalDetails, bmiDat
       </div>
 
       {/* Action Buttons */}
-      <div className="flex space-x-4">
-        <button
-          onClick={() => {
-            try {
-              onBack();
-            } catch (err) {
-              console.error('Error navigating back:', err);
-            }
-          }}
-          className="flex items-center px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
-        >
-          <RotateCcw className="w-4 h-4 mr-2" />
-          Modify Measurements
-        </button>
+      <div className="flex justify-center">
         <button
           onClick={() => {
             try {
