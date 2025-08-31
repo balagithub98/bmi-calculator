@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PersonalDetails } from '../types';
-import { User, Mail, Calendar, Users, AlertCircle } from 'lucide-react';
+import { User, Mail, Calendar, AlertCircle } from 'lucide-react';
 
 interface PersonalDetailsFormProps {
   onSubmit: (details: PersonalDetails) => void;
