@@ -1,14 +1,40 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PersonalDetails, BMIData } from '../types';
-import { RotateCcw, Heart, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { RotateCcw, Heart, AlertTriangle, CheckCircle, XCircle, History } from 'lucide-react';
+import { UserService } from '../services/userService';
 
 interface ResultsDisplayProps {
   personalDetails: PersonalDetails;
   bmiData: BMIData;
   onReset: () => void;
+  onViewHistory: () => void;
 }
 
-const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ personalDetails, bmiData, onReset }) => {
+const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ personalDetails, bmiData, onReset, onViewHistory }) => {
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  useEffect(() => {
+    saveUserRecord();
+  }, []);
+
+  const saveUserRecord = async () => {
+    try {
+      setSaving(true);
+      setSaveStatus('idle');
+      const result = await UserService.saveUserRecord(personalDetails, bmiData);
+      if (result) {
+        setSaveStatus('success');
+      } else {
+        setSaveStatus('error');
+      }
+    } catch (error) {
+      console.error('Error saving user record:', error);
+      setSaveStatus('error');
+    } finally {
+      setSaving(false);
+    }
+  };
   const getBMICategoryInfo = (category: string) => {
     switch (category) {
       case 'Underweight':
@@ -191,8 +217,49 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ personalDetails, bmiDat
         </div>
       </div>
 
+      {/* Save Status */}
+      {saving && (
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+            <p className="text-blue-800">Saving your results...</p>
+          </div>
+        </div>
+      )}
+      
+      {saveStatus === 'success' && (
+        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+            <p className="text-green-800">Results saved successfully!</p>
+          </div>
+        </div>
+      )}
+      
+      {saveStatus === 'error' && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
+            <p className="text-red-800">Failed to save results. Please try again.</p>
+          </div>
+        </div>
+      )}
+
       {/* Action Buttons */}
-      <div className="flex justify-center">
+      <div className="flex justify-center space-x-4">
+        <button
+          onClick={() => {
+            try {
+              onViewHistory();
+            } catch (err) {
+              console.error('Error viewing history:', err);
+            }
+          }}
+          className="flex items-center px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+        >
+          <History className="w-4 h-4 mr-2" />
+          View History
+        </button>
         <button
           onClick={() => {
             try {
