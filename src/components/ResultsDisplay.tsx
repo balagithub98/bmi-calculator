@@ -1,6 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PersonalDetails, BMIData } from '../types';
-import { RotateCcw, Heart, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { RotateCcw, Heart, AlertTriangle, CheckCircle, XCircle, Mail } from 'lucide-react';
+import { BMIService } from '../services/bmiService';
+import { EmailService } from '../services/emailService';
+
+// Global save lock to prevent concurrent saves
+let globalSaveInProgress = false;
 
 interface ResultsDisplayProps {
   personalDetails: PersonalDetails;
@@ -9,6 +14,81 @@ interface ResultsDisplayProps {
 }
 
 const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ personalDetails, bmiData, onReset }) => {
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [hasSaved, setHasSaved] = useState(false);
+  const saveAttemptedRef = useRef(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const saveBMIEntry = useCallback(async () => {
+    // Prevent double saves with global lock
+    if (hasSaved || saving || globalSaveInProgress) {
+      console.log('Save blocked - already saved, currently saving, or global save in progress');
+      return;
+    }
+
+    // Create a unique identifier for this save operation
+    const saveId = `${personalDetails.email}-${bmiData.bmi}-${Date.now()}`;
+    console.log('Attempting to save BMI entry:', saveId);
+    console.log('Personal Details:', personalDetails);
+    console.log('BMI Data:', bmiData);
+
+    try {
+      globalSaveInProgress = true;
+      setSaving(true);
+      setSaveStatus('idle');
+      
+      const result = await BMIService.saveBMIEntry(personalDetails, bmiData);
+      console.log('Save result:', result);
+      
+      if (result) {
+        setSaveStatus('success');
+        setHasSaved(true); // Mark as saved to prevent duplicates
+        console.log('BMI entry saved successfully:', saveId);
+      } else {
+        console.log('Save returned null - Supabase not configured');
+        setSaveStatus('error');
+      }
+    } catch (error: unknown) {
+      console.error('Error saving BMI entry:', error);
+      setSaveStatus('error');
+    } finally {
+      setSaving(false);
+      globalSaveInProgress = false;
+    }
+  }, [personalDetails, bmiData]);
+
+  const sendEmail = useCallback(async () => {
+    if (sendingEmail) return;
+
+    try {
+      setSendingEmail(true);
+      setEmailStatus('idle');
+
+      const result = await EmailService.sendBMIResults(personalDetails, bmiData);
+      
+      if (result.success) {
+        setEmailStatus('success');
+      } else {
+        setEmailStatus('error');
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      setEmailStatus('error');
+    } finally {
+      setSendingEmail(false);
+    }
+  }, [personalDetails, bmiData, sendingEmail]);
+
+  // Automatic save on component mount
+  useEffect(() => {
+    // Only save once when component mounts
+    if (!saveAttemptedRef.current) {
+      saveAttemptedRef.current = true;
+      saveBMIEntry();
+    }
+  }, [saveBMIEntry]);
   const getBMICategoryInfo = (category: string) => {
     switch (category) {
       case 'Underweight':
@@ -191,8 +271,107 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ personalDetails, bmiDat
         </div>
       </div>
 
+      {/* Save Status */}
+      {saving && (
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+            <p className="text-blue-800">Saving your BMI entry...</p>
+          </div>
+        </div>
+      )}
+      
+      {saveStatus === 'success' && (
+        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+            <p className="text-green-800">BMI entry saved successfully!</p>
+          </div>
+        </div>
+      )}
+      
+      {saveStatus === 'error' && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
+            <p className="text-red-800">Failed to save BMI entry. Please try again.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Email Status */}
+      {sendingEmail && (
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+            <p className="text-blue-800">Sending email...</p>
+          </div>
+        </div>
+      )}
+      
+      {emailStatus === 'success' && (
+        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+            <p className="text-green-800">Email sent successfully! Check your inbox.</p>
+          </div>
+        </div>
+      )}
+      
+      {emailStatus === 'error' && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
+            <p className="text-red-800">Failed to send email. Please try again.</p>
+          </div>
+        </div>
+      )}
+
       {/* Action Buttons */}
-      <div className="flex justify-center">
+      <div className="flex justify-center space-x-4">
+        {saveStatus === 'error' && (
+          <button
+            onClick={saveBMIEntry}
+            disabled={saving}
+            className="flex items-center px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50"
+          >
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Retrying...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Retry Save
+              </>
+            )}
+          </button>
+        )}
+
+        <button
+          onClick={sendEmail}
+          disabled={sendingEmail || emailStatus === 'success'}
+          className="flex items-center px-6 py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50"
+        >
+          {sendingEmail ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Sending...
+            </>
+          ) : emailStatus === 'success' ? (
+            <>
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Email Sent
+            </>
+          ) : (
+            <>
+              <Mail className="w-4 h-4 mr-2" />
+              Send Email
+            </>
+          )}
+        </button>
+        
         <button
           onClick={() => {
             try {

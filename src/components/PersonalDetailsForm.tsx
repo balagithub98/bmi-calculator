@@ -8,10 +8,10 @@ interface PersonalDetailsFormProps {
 
 const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({ onSubmit }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    age: '',
-    gender: ''
+    name: 'Test User', // Default name for testing
+    email: 'test@example.com', // Default email for testing
+    age: '25', // Default age for testing
+    gender: 'male' // Default gender for testing
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});

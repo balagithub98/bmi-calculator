@@ -11,8 +11,8 @@ interface BMIFormProps {
 
 const BMIForm: React.FC<BMIFormProps> = ({ onSubmit, onBack, personalDetails }) => {
   const [formData, setFormData] = useState({
-    height: '',
-    weight: '',
+    height: '170', // Default height: 170 cm
+    weight: '70',  // Default weight: 70 kg
     heightUnit: 'cm',
     weightUnit: 'kg'
   });

@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import PersonalDetailsForm from './PersonalDetailsForm';
 import BMIForm from './BMIForm';
 import ResultsDisplay from './ResultsDisplay';
+import BMIHistory from './BMIHistory';
 
 import { PersonalDetails, BMIData } from '../types';
-import { Calculator, Users, AlertCircle } from 'lucide-react';
+import { Calculator, Users, AlertCircle, History } from 'lucide-react';
 
 const BMICalculator: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [personalDetails, setPersonalDetails] = useState<PersonalDetails | null>(null);
   const [bmiData, setBmiData] = useState<BMIData | null>(null);
   const [error, setError] = useState<string | null>(null);
-
+  const [showHistory, setShowHistory] = useState(false);
 
   const handlePersonalDetailsSubmit = (details: PersonalDetails) => {
     try {
@@ -41,9 +42,30 @@ const BMICalculator: React.FC = () => {
       setCurrentStep(1);
       setPersonalDetails(null);
       setBmiData(null);
+      setShowHistory(false);
     } catch (err) {
       setError('Failed to reset form. Please refresh the page.');
       console.error('Error resetting form:', err);
+    }
+  };
+
+  const handleViewHistory = () => {
+    try {
+      setError(null);
+      setShowHistory(true);
+    } catch (err) {
+      setError('Failed to load history. Please try again.');
+      console.error('Error loading history:', err);
+    }
+  };
+
+  const handleBackFromHistory = () => {
+    try {
+      setError(null);
+      setShowHistory(false);
+    } catch (err) {
+      setError('Navigation error. Please try again.');
+      console.error('Error navigating:', err);
     }
   };
 
@@ -71,6 +93,17 @@ const BMICalculator: React.FC = () => {
           </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-2">BMI Calculator</h1>
           <p className="text-gray-600 text-lg">Calculate your Body Mass Index and get personalized health insights</p>
+          
+          {/* History Button */}
+          <div className="mt-4">
+            <button
+              onClick={handleViewHistory}
+              className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <History className="w-4 h-4 mr-2" />
+              View History
+            </button>
+          </div>
         </div>
 
         {/* Progress Indicator */}
@@ -123,12 +156,28 @@ const BMICalculator: React.FC = () => {
             />
           )}
           
-          {currentStep === 3 && personalDetails && bmiData && (
-            <ResultsDisplay 
+                                {currentStep === 3 && personalDetails && bmiData && (
+            <ResultsDisplay
               personalDetails={personalDetails}
               bmiData={bmiData}
               onReset={handleReset}
             />
+          )}
+          
+          {showHistory && (
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">BMI History</h2>
+                <button
+                  onClick={handleBackFromHistory}
+                  className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <Calculator className="w-4 h-4 mr-2" />
+                  Back to Calculator
+                </button>
+              </div>
+              <BMIHistory />
+            </div>
           )}
         </div>
       </div>
