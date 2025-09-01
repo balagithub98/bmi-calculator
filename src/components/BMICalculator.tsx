@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PersonalDetailsForm from './PersonalDetailsForm';
 import BMIForm from './BMIForm';
 import ResultsDisplay from './ResultsDisplay';
-import UserHistory from './UserHistory';
+
 import { PersonalDetails, BMIData } from '../types';
 import { Calculator, Users, AlertCircle } from 'lucide-react';
 
@@ -11,7 +11,7 @@ const BMICalculator: React.FC = () => {
   const [personalDetails, setPersonalDetails] = useState<PersonalDetails | null>(null);
   const [bmiData, setBmiData] = useState<BMIData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
+
 
   const handlePersonalDetailsSubmit = (details: PersonalDetails) => {
     try {
@@ -57,15 +57,7 @@ const BMICalculator: React.FC = () => {
     }
   };
 
-  const handleViewHistory = () => {
-    try {
-      setError(null);
-      setShowHistory(true);
-    } catch (err) {
-      setError('Failed to load history. Please try again.');
-      console.error('Error loading history:', err);
-    }
-  };
+
 
 
 
@@ -136,17 +128,6 @@ const BMICalculator: React.FC = () => {
               personalDetails={personalDetails}
               bmiData={bmiData}
               onReset={handleReset}
-              onViewHistory={handleViewHistory}
-            />
-          )}
-          
-          {showHistory && personalDetails && (
-            <UserHistory 
-              userEmail={personalDetails.email}
-              onSelectRecord={() => {
-                // For now, just go back to results
-                setShowHistory(false);
-              }}
             />
           )}
         </div>
